@@ -6,7 +6,7 @@
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-W, H = 160, 192
+WIDTH, HEIGHT = 160, 192
 joy = bytearray(b'00000')
 lock = threading.Lock()
 tick = 0
@@ -15,7 +15,7 @@ tick = 0
 def paint():
     global tick
     tick += 1
-    buf = bytearray(W * H)
+    buf = bytearray(WIDTH * HEIGHT)
     bg = 2
     pf = 6
     p0c = 14
@@ -31,9 +31,9 @@ def paint():
     fire = j[4:5] == b'1'
 
     wall = [0xF0, 0x00, 0x00, 0x00, 0x0F]
-    for y in range(H):
-        row = y * W
-        for x in range(W):
+    for y in range(HEIGHT):
+        row = y * WIDTH
+        for x in range(WIDTH):
             buf[row + x] = bg
         if 24 <= y <= 168:
             for i, bits in enumerate(wall):
@@ -57,30 +57,30 @@ def paint():
     ]
     for sy, bits in enumerate(spr):
         yy = py + sy * 2
-        if yy >= H:
+        if yy >= HEIGHT:
             break
         for b in range(8):
             if bits & (0x80 >> b):
                 xx = px + b
-                if 0 <= xx < W:
-                    buf[yy * W + xx] = p0c
-                    if yy + 1 < H:
-                        buf[(yy + 1) * W + xx] = p0c
+                if 0 <= xx < WIDTH:
+                    buf[yy * WIDTH + xx] = p0c
+                    if yy + 1 < HEIGHT:
+                        buf[(yy + 1) * WIDTH + xx] = p0c
 
     if fire:
         mx = px + 9
         for y in range(py - 20, py):
-            if 0 <= y < H and 0 <= mx < W:
-                buf[y * W + mx] = p1c
+            if 0 <= y < HEIGHT and 0 <= mx < WIDTH:
+                buf[y * WIDTH + mx] = p1c
 
-    yb = tick % H
-    for x in range(W):
-        buf[yb * W + x] = 4
+    yb = tick % HEIGHT
+    for x in range(WIDTH):
+        buf[yb * WIDTH + x] = 4
 
     return bytes(buf)
 
 
-class H(BaseHTTPRequestHandler):
+class BeamHandler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
 
@@ -115,6 +115,6 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    httpd = HTTPServer(('0.0.0.0', 8000), H)
+    httpd = HTTPServer(('0.0.0.0', 8000), BeamHandler)
     print('beam on :8000  GET /frame  POST /joy')
     httpd.serve_forever()
